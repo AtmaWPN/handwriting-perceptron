@@ -1,0 +1,5 @@
+.idea
+venv
+test_set*
+train_set*
+*.pyc
