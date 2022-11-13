@@ -1,3 +1,8 @@
+import math
+
+import numpy as np
+
+
 class IDX:
     """
     self.file is the name of the idx file
@@ -13,6 +18,9 @@ class IDX:
             for i in range(dimensions):
                 size.append(int.from_bytes(f.read(4), "big"))
             self.size = tuple(size)
+            self.n_area = 1
+            for i in self.size:
+                self.n_area *= i
             self.data_offset = 4 + 4 * dimensions
 
     """
@@ -30,6 +38,18 @@ class IDX:
                 offset += position[i] * mult
             f.seek(self.data_offset + offset)
             return f.read(1)
+
+    """
+    gets a specific batch of the data
+    batch is the index of the batch of data
+    size is the batch size
+    returns an ndarray with size as the first dimension, and the remaining n_area as the second
+    """
+    def get_batch(self, batch, size=200):
+        with open(self.file, 'rb') as f:
+            count = size * math.floor(self.n_area / self.size[0])
+            offset = self.data_offset + batch * size
+            return np.frombuffer(f, int, count, offset).reshape((size, math.floor(self.n_area / self.size[0])))
 
     def get_dimensions(self):
         return self.size

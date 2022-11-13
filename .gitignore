@@ -2,4 +2,5 @@
 venv
 test_set*
 train_set*
+ai_core*
 *.pyc
