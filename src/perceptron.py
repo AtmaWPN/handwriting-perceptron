@@ -51,15 +51,19 @@ class Perceptron:
 
     """
     performs backprop for every training image in a given batch
-    batch is an ndarray
+    batch is an ndarray containing the image data of each batch
+    labels is an ndarray containing the corresponding labels for the images
     returns performance and time data
     """
-    def train(self, batch):
+    def train(self, batch, labels):
         # TODO: train()
         # keep track of nabla_influence
         # for each image in batch:
+        for data in batch:
             # calculate
+            A_x = self.calculate(data)
             # get cost (desire)
+
             # backprop
         # divide nabla_influence by amount of data in batch (average)
         # add nabla_influence to influence
