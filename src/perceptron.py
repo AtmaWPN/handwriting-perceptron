@@ -19,24 +19,9 @@ class Perceptron:
         self.hidden_layer_count = hidden_layer_count
         self.hidden_layer_dimension = hidden_layer_dimension
 
-        # make these initializations into methods
-        # initialize activations
-        self.layers = list()
-        self.layers.append(np.zeros(IN_dimension))
-        for i in range(hidden_layer_count):
-            self.layers.append(np.zeros(hidden_layer_dimension))
-        self.layers.append(np.zeros(OUT_dimension))
-
-        # initialize biases
-        self.biases = list()
-        for i in range(hidden_layer_count):
-            self.biases.append(np.zeros(hidden_layer_dimension))
-        self.biases.append(np.zeros(OUT_dimension))  # try not using a bias vector for OUT
-
-        # initialize weights
-        self.weights = list()
-        for i in range(1, len(self.layers)):
-            self.weights.append(np.ones((self.layers[i].shape[0], self.layers[i - 1].shape[0])))
+        self.layers = self.init_layers()
+        self.biases = self.init_biases()
+        self.weights = self.init_weights()
 
     """
     sets the IN layer to a given ndarray
@@ -58,9 +43,30 @@ class Perceptron:
     def calculate(self, input_list):
         self.set_input(input_list) # TODO: either handle errors here instead of in set_input(), or don't nest these methods
         for i in range(1, len(self.layers)):
-            self.layers[i] = self.weights[i - 1] @ self.layers[i - 1] - self.biases[i - 1]
+            self.layers[i] = self.weights[i - 1] @ self.layers[i - 1] + self.biases[i - 1]
             np.clip(self.layers[i], 0, None, self.layers[i]) # ReLU
         return self.layers[len(self.layers) - 1]
+
+    def init_biases(self):
+        biases = list()
+        for i in range(self.hidden_layer_count):
+            biases.append(np.zeros((self.hidden_layer_dimension, 1)))
+        biases.append(np.zeros((self.OUT_dimension, 1)))
+        return biases
+
+    def init_layers(self):
+        layers = list()
+        layers.append(np.zeros((self.IN_dimension, 1)))
+        for i in range(self.hidden_layer_count):
+            layers.append(np.zeros((self.hidden_layer_dimension, 1)))
+        layers.append(np.zeros((self.OUT_dimension, 1)))
+        return layers
+
+    def init_weights(self):
+        weights = list()
+        for i in range(1, len(self.layers)):
+            weights.append(np.zeros((self.layers[i].shape[0], self.layers[i - 1].shape[0])))
+        return weights
 
     """
     performs backprop for every training image in a given batch
@@ -71,14 +77,9 @@ class Perceptron:
     def train(self, batch, labels):
         # TODO: train()
         # keep track of nabla_influence
-        nabla_bias = list()
-        for i in range(self.hidden_layer_count):
-            nabla_bias.append(np.zeros(self.hidden_layer_dimension))
-        nabla_bias.append(np.zeros(self.OUT_dimension))
+        nabla_bias = self.init_biases()
 
-        nabla_weight = list()
-        for i in range(1, len(self.layers)):
-            nabla_weight.append(np.ones((self.layers[i].shape[0], self.layers[i - 1].shape[0])))
+        nabla_weight = self.init_weights(fill=0)
         
         # for each image in batch:
         for (data, label) in zip(batch, labels):
@@ -107,13 +108,13 @@ class Perceptron:
     """
     def backpropagate(self, nabla_bias, nabla_weight, layer, desire):
         d_ReLU = np.sign(self.layers[layer])
-        # it's nabla_bias[layer - 1] because layer - 1 is the index of the layer in biases (not every layer has biases)
-        nabla_bias[layer - 1] += 2 * d_ReLU * desire
-        nabla_weight[layer - 1] += self.layers[layer - 1] @ (2 * d_ReLU * desire)
+        consistent_partial = np.atleast_2d(2 * d_ReLU * desire) # the part of each partial derivative that is consistent
+        nabla_bias[layer - 1] += consistent_partial
+        nabla_weight[layer - 1] += consistent_partial @ self.layers[layer - 1].T
         if layer == 1:
             return [nabla_bias, nabla_weight]
         else:
-            desire = self.weights[layer - 1] @ (2 * d_ReLU * desire)
+            desire = self.weights[layer - 1].T @ consistent_partial
         return self.backpropagate(nabla_bias, nabla_weight, layer - 1, desire)
 
     """
@@ -139,26 +140,9 @@ class Perceptron:
     Use in case of sentience
     """
     def reset(self):
-        # TODO: maybe store this stuff and make some getters
-        IN_dimension = np.shape(self.layers[0])[0]
-        OUT_dimension = np.shape(self.layers[-1])[0]
-        hidden_layer_count = len(self.layers) - 2
-        hidden_layer_dimension = np.shape(self.layers[1])[0]
-
-        self.layers = list()
-        self.biases = list()
-        self.weights = list()
-        self.layers.append(np.zeros(IN_dimension))
-        for i in range(0, hidden_layer_count):
-            self.layers.append(np.zeros(hidden_layer_dimension))
-        self.layers.append(np.zeros(OUT_dimension))
-        # initialize biases
-        for i in range(0, hidden_layer_count):
-            self.biases.append(np.zeros(hidden_layer_dimension))
-        self.biases.append(np.zeros(OUT_dimension))  # try not using a bias vector for OUT
-        # initialize weights
-        for i in range(1, len(self.layers)):
-            self.weights.append(np.ones((self.layers[i].shape[0], self.layers[i - 1].shape[0])))
+        self.layers = self.init_layers()
+        self.biases = self.init_biases()
+        self.weights = self.init_weights()
 
     def __str__(self):
         output = ""
