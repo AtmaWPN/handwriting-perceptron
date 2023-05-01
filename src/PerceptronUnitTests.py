@@ -5,7 +5,7 @@
     # constructor (test size)
     # set_input
     # calculate
-    # train (test single backprop step with tiny batch)
+    # backprop
     # core dump and load
     # reset
 
@@ -16,6 +16,7 @@ import numpy as np
 class TestStringMethods(unittest.TestCase):
     def setUp(self):
         self.perceptron = Perceptron(IN_dimension=2, OUT_dimension=1, hidden_layer_count=1, hidden_layer_dimension=3)
+        self.perceptron.weights = self.perceptron.empty_weights(1)
 
     def test_constructor(self):
         # layers
@@ -39,24 +40,24 @@ class TestStringMethods(unittest.TestCase):
         self.assertFalse(self.perceptron.set_input(np.ones((3, 1))))
 
     def test_calculate(self):
-        self.assertEqual(0, self.perceptron.calculate(np.ones((2, 1)))[0][0])
+        self.assertEqual(6, self.perceptron.calculate(np.ones((2, 1)))[0][0])
 
     def test_backprop(self):
-        self.perceptron.calculate(np.ones((2, 1)))
-        print(self.perceptron)
+        desire = 1 - self.perceptron.calculate(np.ones((2, 1)))
 
         nabla_bias = self.perceptron.init_biases()
 
-        nabla_weight = self.perceptron.init_weights()
+        nabla_weight = self.perceptron.empty_weights(0)
         
-        self.perceptron.backpropagate(nabla_bias, nabla_weight, self.perceptron.hidden_layer_count + 1, 1)
+        self.perceptron.backpropagate(nabla_bias, nabla_weight, self.perceptron.hidden_layer_count + 1, desire)
 
         for (bias, bias_change) in zip(self.perceptron.biases, nabla_bias):
             bias += bias_change
         for (weight, weight_change) in zip(self.perceptron.weights, nabla_weight):
             weight += weight_change
-        self.perceptron.calculate(np.ones((2, 1)))
-        print(self.perceptron)
+        
+        new_desire = 1 - self.perceptron.calculate(np.ones((2, 1)))
+        self.assert_(abs(int(new_desire)) < abs(int(desire)))
 
     def test_core_dump(self):
         self.perceptron.calculate(np.ones((2, 1)))
@@ -65,10 +66,10 @@ class TestStringMethods(unittest.TestCase):
         self.perceptron.core_load("ai_core_test.npz")
         self.assertEqual(1, self.perceptron.layers[0][0])
         self.assertEqual(1, self.perceptron.layers[0][1])
-        self.assertEqual(0, self.perceptron.layers[1][0])
-        self.assertEqual(0, self.perceptron.layers[1][1])
-        self.assertEqual(0, self.perceptron.layers[1][2])
-        self.assertEqual(0, self.perceptron.layers[2][0])
+        self.assertEqual(2, self.perceptron.layers[1][0])
+        self.assertEqual(2, self.perceptron.layers[1][1])
+        self.assertEqual(2, self.perceptron.layers[1][2])
+        self.assertEqual(6, self.perceptron.layers[2][0])
 
     def test_reset(self):
         self.perceptron.calculate(np.ones(2))

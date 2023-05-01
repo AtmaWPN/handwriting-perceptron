@@ -12,6 +12,7 @@ class Perceptron:
     generation = 0
     accuracy = 0.0
     training_time = 0
+    LEARNING_RATE = 0.00002 # 0.02 seems close to the maximum, but this depends entirely on dataset
 
     def __init__(self, IN_dimension=784, OUT_dimension=10, hidden_layer_count=2, hidden_layer_dimension=16):
         self.IN_dimension = IN_dimension
@@ -41,7 +42,8 @@ class Perceptron:
     returns the OUT layer
     """
     def calculate(self, input_list):
-        self.set_input(input_list) # TODO: either handle errors here instead of in set_input(), or don't nest these methods
+        if not self.set_input(input_list): # TODO: either handle errors here instead of in set_input(), or don't nest these methods
+            print("input doesn't work")
         for i in range(1, len(self.layers)):
             self.layers[i] = self.weights[i - 1] @ self.layers[i - 1] + self.biases[i - 1]
             np.clip(self.layers[i], 0, None, self.layers[i]) # ReLU
@@ -65,7 +67,16 @@ class Perceptron:
     def init_weights(self):
         weights = list()
         for i in range(1, len(self.layers)):
-            weights.append(np.zeros((self.layers[i].shape[0], self.layers[i - 1].shape[0])))
+            matrix = np.random.rand(self.layers[i].shape[0], self.layers[i - 1].shape[0])
+            weights.append(matrix)
+        return weights
+
+    def empty_weights(self, fill):
+        weights = list()
+        for i in range(1, len(self.layers)):
+            matrix = np.zeros((self.layers[i].shape[0], self.layers[i - 1].shape[0]))
+            matrix.fill(fill)
+            weights.append(matrix)
         return weights
 
     """
@@ -75,28 +86,34 @@ class Perceptron:
     returns performance and time data
     """
     def train(self, batch, labels):
-        # TODO: train()
+        start_time = datetime.now()
+        batch_desire = 0
+
         # keep track of nabla_influence
         nabla_bias = self.init_biases()
-
         nabla_weight = self.init_weights(fill=0)
-        
         # for each image in batch:
         for (data, label) in zip(batch, labels):
-            # calculate
-            A_x = self.calculate(data)
             # get cost (desire)
-            actual = np.zeros(len(self.layers[len(self.layers) - 1]))
-            actual[label - 1] = 1
-            
-            desire = actual - self.layers[len(self.layers) - 1]
+            desire = label - self.calculate(data)
+            batch_desire += abs(desire)
             # backprop
             self.backpropagate(nabla_bias, nabla_weight, self.hidden_layer_count + 1, desire)
-            
-        # divide nabla_influence by amount of data in batch (average)
-        # add nabla_influence to influence
+
+        batch_desire /= len(batch)
+
+        for (bias, bias_change) in zip(self.biases, nabla_bias):
+            # divide nabla_influence by amount of data in batch (average)
+            bias_change /= len(batch)
+            # add nabla_influence to influence
+            bias += bias_change
+        for (weight, weight_change) in zip(self.weights, nabla_weight):
+            weight_change /= len(batch)
+            weight += weight_change
         # record data on performance and time
-        pass
+        total_time = datetime.now() - start_time
+        print(f"Time for this batch:         {total_time}")
+        print(f"Performance over this batch: {batch_desire}")
 
     """
     Recursive backpropagation algorithm
@@ -109,12 +126,12 @@ class Perceptron:
     def backpropagate(self, nabla_bias, nabla_weight, layer, desire):
         d_ReLU = np.sign(self.layers[layer])
         consistent_partial = np.atleast_2d(2 * d_ReLU * desire) # the part of each partial derivative that is consistent
-        nabla_bias[layer - 1] += consistent_partial
-        nabla_weight[layer - 1] += consistent_partial @ self.layers[layer - 1].T
+        nabla_bias[layer - 1] += consistent_partial * self.LEARNING_RATE
+        nabla_weight[layer - 1] += consistent_partial @ self.layers[layer - 1].T * self.LEARNING_RATE
         if layer == 1:
             return [nabla_bias, nabla_weight]
         else:
-            desire = self.weights[layer - 1].T @ consistent_partial
+            desire = self.weights[layer - 1].T @ consistent_partial # don't bother scaling by learning rate
         return self.backpropagate(nabla_bias, nabla_weight, layer - 1, desire)
 
     """
@@ -142,7 +159,7 @@ class Perceptron:
     def reset(self):
         self.layers = self.init_layers()
         self.biases = self.init_biases()
-        self.weights = self.init_weights()
+        self.weights = self.empty_weights(1)
 
     def __str__(self):
         output = ""
