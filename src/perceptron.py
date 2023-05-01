@@ -12,9 +12,10 @@ class Perceptron:
     generation = 0
     accuracy = 0.0
     training_time = 0
-    LEARNING_RATE = 0.00002 # 0.02 seems close to the maximum, but this depends entirely on dataset
+    LEARNING_RATE = 1 # 0.02 seems close to the maximum, but this depends entirely on dataset
 
-    def __init__(self, IN_dimension=784, OUT_dimension=10, hidden_layer_count=2, hidden_layer_dimension=16):
+    def __init__(self, IN_dimension=784, OUT_dimension=10, hidden_layer_count=2, hidden_layer_dimension=16, learning_rate=1):
+        self.LEARNING_RATE = learning_rate
         self.IN_dimension = IN_dimension
         self.OUT_dimension = OUT_dimension
         self.hidden_layer_count = hidden_layer_count

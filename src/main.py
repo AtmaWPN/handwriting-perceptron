@@ -2,6 +2,7 @@ import sys
 
 from perceptron import Perceptron
 import imagePainter
+import numpy as np
 from idx_format_converter import IDX
 
 """
@@ -17,21 +18,18 @@ def get_image(file, image):
 
 
 if __name__ == '__main__':
-    # TODO
     # initialize Perceptron
-    # for batch in dataset
-        # train Perceptron on batch, print performance
-        # coredump
-    # demonstration (show image input from test set and Perceptron output)
-    neural_network = Perceptron()
-    print(neural_network)
-    neural_network.set_input(get_image(sys.argv[1], 0))
-    print(neural_network)
-    neural_network.calculate(get_image(sys.argv[1], 0))
-    print(neural_network)
-    neural_network.core_dump(True)
-    neural_network.reset()
-    print(neural_network)
-    neural_network.core_load('ai_core_test.npz')
-    print(neural_network)
-    # imagePainter.draw_all(sys.argv[1])
+    perceptron = Perceptron(learning_rate=0.000005, IN_dimension=2, OUT_dimension=1, hidden_layer_count=3, hidden_layer_dimension=6)
+    # TODO: teach it multiplication
+    # set up multiplication dataset
+    batch = list()
+    labels = list()
+    for i in range(1, 13):
+        for j in range(1, 13):
+            batch.append(np.full((2, 1), np.atleast_2d(np.array([i, j])).T))
+            labels.append(np.full((1, 1), i * j))
+    for i in range(10):
+        print(f"batch {i}")
+        perceptron.train(batch, labels)
+    for data in batch:
+        pass#print(f"Calculated: {self.perceptron.calculate(data)}, Actual: {data[0] * data[1]}")
