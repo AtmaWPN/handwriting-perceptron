@@ -49,7 +49,16 @@ class IDX:
         with open(self.file, 'rb') as f:
             count = size * math.floor(self.n_area / self.size[0])
             offset = self.data_offset + batch * size
-            return np.frombuffer(f, int, count, offset).reshape((size, math.floor(self.n_area / self.size[0])))
+            return np.frombuffer(f.read(), int, count, offset).reshape((size, math.floor(self.n_area / self.size[0])))
+        
+    def get_batches(self, size=200):
+        batches = list()
+        # determine number of batches
+        batch_count = math.floor(self.size[0] / size)
+        # get batches
+        for batch in range(batch_count):
+            batches.append(self.get_batch(batch, size=size))
+        return batches
 
     def get_dimensions(self):
         return self.size

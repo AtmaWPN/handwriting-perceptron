@@ -20,16 +20,16 @@ def get_image(file, image):
 if __name__ == '__main__':
     # initialize Perceptron
     perceptron = Perceptron(learning_rate=0.000005, IN_dimension=2, OUT_dimension=1, hidden_layer_count=3, hidden_layer_dimension=6)
-    # TODO: teach it multiplication
-    # set up multiplication dataset
-    batch = list()
-    labels = list()
-    for i in range(1, 13):
-        for j in range(1, 13):
-            batch.append(np.full((2, 1), np.atleast_2d(np.array([i, j])).T))
-            labels.append(np.full((1, 1), i * j))
-    for i in range(10):
+    # set up batches
+    data = IDX("train_set_images")
+    label_data = IDX("train_set_labels")
+    batches = data.get_batches()
+    all_labels = label_data.get_batches()
+    print(len(batches))
+    print(len(all_labels))
+    # train on all batches
+    i = 0
+    for (batch, labels) in zip(batches, all_labels):
         print(f"batch {i}")
         perceptron.train(batch, labels)
-    for data in batch:
-        pass#print(f"Calculated: {self.perceptron.calculate(data)}, Actual: {data[0] * data[1]}")
+        i += 1
