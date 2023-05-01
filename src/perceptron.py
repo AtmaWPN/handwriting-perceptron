@@ -91,7 +91,7 @@ class Perceptron:
 
         # keep track of nabla_influence
         nabla_bias = self.init_biases()
-        nabla_weight = self.init_weights(fill=0)
+        nabla_weight = self.empty_weights(0)
         # for each image in batch:
         for (data, label) in zip(batch, labels):
             # get cost (desire)
