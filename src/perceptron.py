@@ -33,7 +33,7 @@ class Perceptron:
     """
     def set_input(self, input_list):
         if len(input_list) == len(self.layers[0]):
-            self.layers[0] = np.array(input_list)
+            self.layers[0] = np.atleast_2d(np.array(input_list)).T
             return True
         return False
 
@@ -43,10 +43,12 @@ class Perceptron:
     returns the OUT layer
     """
     def calculate(self, input_list):
-        if not self.set_input(input_list): # TODO: either handle errors here instead of in set_input(), or don't nest these methods
-            print("input doesn't work")
+        # normalize data
+        input_list /= input_list.max()
+        if not self.set_input(input_list):
+            print("INPUT DOESN'T WORK!")
         for i in range(1, len(self.layers)):
-            self.layers[i] = self.weights[i - 1] @ self.layers[i - 1] + self.biases[i - 1]
+            self.layers[i] = (self.weights[i - 1] @ self.layers[i - 1]) + self.biases[i - 1]
             np.clip(self.layers[i], 0, None, self.layers[i]) # ReLU
         return self.layers[len(self.layers) - 1]
 
@@ -88,7 +90,7 @@ class Perceptron:
     """
     def train(self, batch, labels):
         start_time = datetime.now()
-        batch_desire = 0
+        cost = 0
 
         # keep track of nabla_influence
         nabla_bias = self.init_biases()
@@ -96,12 +98,14 @@ class Perceptron:
         # for each image in batch:
         for (data, label) in zip(batch, labels):
             # get cost (desire)
-            desire = label - self.calculate(data)
-            batch_desire += abs(desire)
+            actual = np.zeros((10, 1))
+            actual[int(label)][0] = 1
+            desire = actual - self.calculate(data)
+            cost += np.sum(np.square(desire))
             # backprop
             self.backpropagate(nabla_bias, nabla_weight, self.hidden_layer_count + 1, desire)
 
-        batch_desire /= len(batch)
+        cost /= len(batch)
 
         for (bias, bias_change) in zip(self.biases, nabla_bias):
             # divide nabla_influence by amount of data in batch (average)
@@ -113,8 +117,7 @@ class Perceptron:
             weight += weight_change
         # record data on performance and time
         total_time = datetime.now() - start_time
-        print(f"Time for this batch:         {total_time}")
-        print(f"Performance over this batch: {batch_desire}")
+        return cost
 
     """
     Recursive backpropagation algorithm

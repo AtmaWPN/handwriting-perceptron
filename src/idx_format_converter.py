@@ -47,9 +47,10 @@ class IDX:
     """
     def get_batch(self, batch, size=200):
         with open(self.file, 'rb') as f:
-            count = size * math.floor(self.n_area / self.size[0])
-            offset = self.data_offset + batch * size
-            return np.frombuffer(f.read(), int, count, offset).reshape((size, math.floor(self.n_area / self.size[0])))
+            count = size * math.floor(self.n_area / self.size[0]) # bytes to read
+            offset = self.data_offset + batch * size # bytes to skip
+            f.seek(offset)
+            return np.array(np.frombuffer(f.read(count), dtype=np.uint8, count=count).reshape((size, math.floor(self.n_area / self.size[0]))), dtype=np.float64)
         
     def get_batches(self, size=200):
         batches = list()

@@ -16,20 +16,35 @@ def get_image(file, image):
             data_vector.append(int.from_bytes(data.get_val((image, row, col)), "big"))
     return data_vector
 
-
 if __name__ == '__main__':
     # initialize Perceptron
-    perceptron = Perceptron(learning_rate=0.000005, IN_dimension=2, OUT_dimension=1, hidden_layer_count=3, hidden_layer_dimension=6)
+    perceptron = Perceptron(learning_rate=0.00000005)
     # set up batches
-    data = IDX("train_set_images")
+    #imagePainter.draw_batch("train_set_images", 0)
+    train_set = IDX("train_set_images")
     label_data = IDX("train_set_labels")
-    batches = data.get_batches()
+    batches = train_set.get_batches()
     all_labels = label_data.get_batches()
     print(len(batches))
     print(len(all_labels))
-    # train on all batches
+    # train all batches
     i = 0
-    for (batch, labels) in zip(batches, all_labels):
-        print(f"batch {i}")
-        perceptron.train(batch, labels)
-        i += 1
+    csv_file = ""
+    for i in range(20):
+        for (batch, labels) in zip(batches, all_labels):
+            print(f"batch {i}")
+            csv_file += str(perceptron.train(batch, labels)) + ","
+            i += 1
+    perceptron.core_dump(test=True)
+
+    with open("performance_data.csv", "wt") as f:
+        f.write(csv_file)
+
+    # test perceptron
+    test_set = IDX("test_set_images")
+    test_labels = IDX("test_set_labels")
+    test_image = test_set.get_batch(0, size=1)[0]
+    test_label = test_labels.get_batch(0, size=1)
+    print(perceptron.calculate(test_image))
+    print(test_label)
+    #imagePainter.draw_image("test_set_images", 0)

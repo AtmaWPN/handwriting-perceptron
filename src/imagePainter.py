@@ -2,7 +2,7 @@ from tkinter import Tk, PhotoImage, mainloop, Canvas
 from idx_format_converter import IDX
 
 IMAGE_SIZE = 28
-SCALE = 1
+SCALE = 4
 WINDOW_SIZE = IMAGE_SIZE * SCALE
 
 
@@ -37,9 +37,22 @@ def draw_all(filename):
     mainloop()
 
 
-def draw_batch(filename, start, count):
-    # TODO: write draw_batch()
-    pass
+def draw_batch(filename, batch_index, size=200):
+    window = Tk()
+    image = PhotoImage(width=WINDOW_SIZE, height=WINDOW_SIZE)
+
+    canvas = Canvas(window, width=WINDOW_SIZE, height=WINDOW_SIZE, bg='#000000')
+    canvas.pack()
+    canvas.create_image((WINDOW_SIZE / 2, WINDOW_SIZE / 2), image=image, state="normal")
+
+    data = IDX(filename)
+    batch = data.get_batch(batch_index, size=size)
+    for i in range(len(batch)):
+        paint(image, window, filename, i + batch_index)
+        window.after(50)
+
+    print("Close the image window to exit the program")
+    mainloop()
 
 
 def paint(image, window, filename, image_number):
